@@ -3,6 +3,7 @@ local Selection = require("selection")
 local Menu = require("menu")
 local PartRegistry = require("world/shipparts/partRegistry")
 local LocationTable = require("locationTable")
+local Util = require("util")
 
 local Player = {}
 Player.__index = Player
@@ -37,7 +38,6 @@ function Player.create(world, controls, structure, camera)
 	self.cursorY = 0
 	self.debugmode = false
 
-	self.compass = love.graphics.newImage("res/images/compass.png")
 	self.cursor = love.graphics.newImage("res/images/pointer.png")
 
 	return self
@@ -219,13 +219,32 @@ function Player:drawExtras()
 	end
 	local x, y = self.camera:getPosition()
 	local _, _, width, height = self.camera:getScissor()
-	--draw the compass in the lower right hand coner 60 pixels from the edges
-	love.graphics.draw(
-			self.compass,
-			width - 60,
-			height - 60,
-			math.atan2(x - point[1], y - point[2]) + math.pi,
-			1, 1, 25, 25)
+
+	-- Draw the compass in the lower right hand corner.
+	local compassSize = 20
+	local compassPadding = 10
+	local needleSize = 4
+	local compassX = width - compassSize - compassPadding
+	local compassY = height - compassSize - compassPadding
+
+	love.graphics.circle(
+		"line",
+		compassX,
+		compassY,
+		compassSize
+	)
+	needleX, needleY = Util.vectorComponents(
+		compassSize - needleSize,
+		math.atan2(x - point[1], y - point[2]) + math.pi/2
+	)
+	love.graphics.circle(
+		"fill",
+		compassX + needleX,
+		compassY + needleY,
+		needleSize
+	)
+
+	-- Draw the cursor.
 	love.graphics.draw(self.cursor, self.cursorX - 2, self.cursorY - 2)
 end
 
