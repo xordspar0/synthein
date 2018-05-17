@@ -39,6 +39,7 @@ function Player.create(world, controls, structure, camera)
 	self.debugmode = false
 
 	self.cursor = love.graphics.newImage("res/images/pointer.png")
+	self.compass = love.graphics.newImage("res/images/compass.png")
 
 	return self
 end
@@ -221,27 +222,30 @@ function Player:drawExtras()
 	local _, _, width, height = self.camera:getScissor()
 
 	-- Draw the compass in the lower right hand corner.
-	local compassSize = 20
+	local compassSize = 50
 	local compassPadding = 10
-	local needleSize = 4
-	local compassX = width - compassSize - compassPadding
-	local compassY = height - compassSize - compassPadding
+	local compassX = width - compassSize/2 - compassPadding
+	local compassY = height - compassSize/2 - compassPadding
+	local needleX, needleY = Util.vectorComponents(
+		compassSize/2 - 5,
+		math.atan2(x - point[1], y - point[2]) + math.pi/2
+	)
 
 	love.graphics.circle(
 		"line",
 		compassX,
 		compassY,
-		compassSize
+		compassSize/2
 	)
-	needleX, needleY = Util.vectorComponents(
-		compassSize - needleSize,
-		math.atan2(x - point[1], y - point[2]) + math.pi/2
+	love.graphics.draw(
+		self.compass,
+		compassX, compassY, 0,
+		compassSize/100, compassSize/100,
+		50, 50
 	)
-	love.graphics.circle(
-		"fill",
-		compassX + needleX,
-		compassY + needleY,
-		needleSize
+	love.graphics.line(
+		compassX, compassY,
+		compassX + needleX, compassY + needleY
 	)
 
 	-- Draw the cursor.
