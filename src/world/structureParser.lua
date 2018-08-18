@@ -23,112 +23,71 @@ function StructureParser.shipUnpack(appendix, shipData)
 		shipString, stringLength = StructureParser.loadShipFromFile(appendix)
 	end
 
-	local shipTable = {}
+	local shipTable = {parts = GridTable()}
 	local player = false
-	shipTable.parts = GridTable.create()
-	local loadDataTable = {}
-	local location = {}
-	local loadData = {}
-	if shipString and stringLength then
-		local j, k, x, y, baseJ, baseK
-		j = 0
-		k = 0
-		for i = 1, stringLength do
-			local c = shipString:sub(i,i)
-			j = j + 1
-			if c == '\n' then
-				j = 0
-				k = k + 1
-			elseif c == '*' then
-				baseJ = j - 1
-				baseK = k
-			elseif c == '(' then
-				for a = 1,(stringLength-i) do
-					c = shipString:sub(i + a, i + a)
-					if c == ')' then
-						local locationString = shipString:sub(i + 1, i + a - 1)
-						location = {}
-						for coord in string.gmatch(locationString, "[-0-9.]+") do
-							table.insert(location, tonumber(coord))
-						end
-					end
-				end
-			elseif c == '[' then
-				for a = 1,(stringLength-i) do
-					c = shipString:sub(i + a, i + a)
-					if c == ']' then
-						local dataString = shipString:sub(i + 1, i + a - 1)
-						loadData = {}
-						for var in string.gmatch(dataString, "[-0-9.]+") do
-							table.insert(loadData, tonumber(var))
-						end
-					end
-				end
---			elseif c == '{' then
---				local braceLevel = 0
---				local endBrace
---				for a = 1,(stringLength-i) do
---					c = shipString:sub(i + a, i + a)
---					if c == '{' then
---						braceLevel = braceLevel + 1
---					elseif c == '}' then
---						if braceLevel == 0 then
---							endBrace = a
---							break
---						else
---							braceLevel = braceLevel - 1
---						end
---					elseif c == '\n' then break
---					end
---				end
---				local loadData = Tserial.unpack(shipString:sub(i, i + endBrace), true)
-				table.insert(loadDataTable, {location, loadData})
+
+	if not shipString then return end
+
+	local baseX
+	local y = 0
+	for line in shipString:gmatch(".-\n") do
+		y = y + 1
+		local find = line:find("*")
+		if find then
+			baseX = find - 1
+			break
+		end
+	end
+
+	for line in shipString:gmatch(".-\n") do
+		y = y - 1
+		local length = #line
+		local m = line:find("[.%[\n]") or length + 1
+		local types = line:sub(1, m - 1)
+		local dataString = line:sub(m, length)
+
+		local dataTable = {}
+		for partData in dataString:gmatch("[.%[]([^.%[%]\n]*)%]?") do
+			partDataTable = {}
+			for number in partData:gmatch("[^,]") do
+				table.insert(partDataTable, tonumber(number))
 			end
+			table.insert(dataTable, partDataTable)
 		end
 
-		j = 0
-		k = 0
-		for i = 1, stringLength do
-			local c = shipString:sub(i,i)
-			local nc = shipString:sub(i + 1, i + 1)
---			local angle = 1
-			local data
-			j = j + 1
-			x = (j - baseJ)/2
-			y = baseK - k
-			if loadDataTable[1] then
-				if loadDataTable[1][1][1] == x and loadDataTable[1][1][2]	== y then
-					data = loadDataTable[1][2]
-				end
-			end
+		local partCounter = 0
+		for i = 1, #types - 1 do
+			if types:sub(i, i + 1):match("%a[1234*]") then
+				local c = types:sub(i,i)
+				local nc = types:sub(i + 1, i + 1)
 
-			if c == '\n' then
-				j = 0
-				k = k + 1
-			elseif c == 'b' or c == 'e' or c == 'g' or c == 'a' or c == 'p' or c == 'n' then
-				local part = PartRegistry.createPart(c, shipData)
+				local part, ifPlayer = PartRegistry.createPart(c, shipData)
+
+				-- Data handling.
+				partCounter = partCounter + 1
+				local partData = dataTable[partCounter]
+				if partData then part:loadData(partData) end
+
+				-- Location handling.
+				local x = (i - baseX)/2
 				local orientation
 				if nc == '*' then
-					if c == 'a' or c == 'p' or c == 'n'then
+					if part.getTeam then
 						shipTable.corePart = part
-						if c == 'p' then
-							player = true
-						end
+						player = ifPlayer
 					end
 					orientation = 1
-				elseif nc == '1' or nc == '2' or nc == '3' or nc == '4' then
+				else
 					orientation = tonumber(nc)
 				end
-				if data then
-					part:loadData(data)
-				end
 				part:setLocation({x, y, orientation})
+
+				-- Add to grid table
 				shipTable.parts:index(x, y, part)
-			elseif c == '{' or c == '}' then
-				break
 			end
 		end
 	end
+
 	return shipTable, player
 end
 
@@ -141,6 +100,7 @@ function StructureParser.shipPack(structure, saveThePartData)
 	for _, part in ipairs(parts) do
 		local x = part.location[1]
 		local y = part.location[2]
+			print(y, x)
 		if     x < xLow  then
 			xLow = x
 		elseif x > xHigh then
