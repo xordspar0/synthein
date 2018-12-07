@@ -2,6 +2,7 @@ local GridTable = require("gridTable")
 local Settings = require("settings")
 local StructureMath = require("world/structureMath")
 local StructureParser = require("world/structureParser")
+local Shield = require("world/shipparts/shield")
 
 local Structure = class(require("world/worldObjects"))
 
@@ -9,8 +10,6 @@ function Structure:__create(worldInfo, location, data, appendix)
 	self.worldInfo = worldInfo
 	self.physics = worldInfo.physics
 	self.events = worldInfo.events
-	self.maxDiameter = 1
-	self.size = 1
 
 	local shipTable
 	if appendix then
@@ -52,11 +51,14 @@ function Structure:__create(worldInfo, location, data, appendix)
 	end
 
 	self.body:setUserData(self)
+	self.shield = Shield(self.body)
 
 	local function callback(part, structure)
 		structure:addFixture(part)
+		if part.isShield then self.shield:addPart(unpack(part.location)) end
 	end
 	self.gridTable:loop(callback, self)
+
 end
 
 function Structure:postCreate(references)
@@ -106,8 +108,8 @@ end
 function Structure:addPart(part, x, y, orientation)
 	part:setLocation({x, y, orientation})
 	self:addFixture(part)
-	--self:calculateSize(x, y)
-	self:recalculateSize()
+
+	if part.isShield then self.shield:addPart(x, y) end
 
 	self.gridTable:index(x, y, part)
 end
@@ -267,22 +269,6 @@ function Structure:testConnection(testPoints)
 	end
 
 	return clusters
-end
-
-function Structure:recalculateSize()
-	self.maxDiameter = 1
-	local function callback(part, self, x, y)
-		x = math.abs(x)
-		y = math.abs(y)
-		local d = math.max(x, y) + x + y + 1
-		if self.maxDiameter < d then
-			self.maxDiameter = d
-			self.size = math.ceil(self.maxDiameter * 0.5625/
-								  Settings.chunkSize)
-		end
-	end
-
-	self.gridTable:loop(callback, self)
 end
 
 -- Part was disconnected or destroyed remove part and handle outcome.
