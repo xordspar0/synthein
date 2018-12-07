@@ -21,7 +21,8 @@ e = require(directory .. "engineBlock"),
 g = require(directory .. "gunBlock"),
 a = require(directory .. "aiBlock"),
 p = require(directory .. "playerBlock"),
-n = require(directory .. "anchor")
+n = require(directory .. "anchor"),
+s = require(directory .. "shieldBlock")
 }
 
 local PartRegistry = {}
