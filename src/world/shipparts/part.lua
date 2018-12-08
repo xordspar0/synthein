@@ -1,6 +1,7 @@
 local Settings = require("settings")
 local Util = require("util")
 local LocationTable = require("locationTable")
+local PhysicsReferences = require("world/physicsReferences")
 
 local Part = class()
 
@@ -28,6 +29,7 @@ end
 function Part:setFixture(fixture)
 	self.fixture = fixture
 	self.fixture:setUserData(self)
+	PhysicsReferences.setFixtureType(self.fixture, "general")
 end
 
 function Part:setLocation(location)
