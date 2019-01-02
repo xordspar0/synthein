@@ -85,15 +85,13 @@ function AI:getOrders(worldInfo, leader, body, bodyList)
 		if shoot then
 			local hit = true
 			local function RayCastCallback(fixture, _, _, _, _, _) --(fixture, x, y, xn, yn, fraction)
-				local structure = fixture:getBody():getUserData()
-				if structure and structure.corePart then
-					local team = structure.corePart:getTeam()
-					if not teamHostility:test(self.team, team) then
-						if not structure.corePart.ai or
-								structure.corePart.ai ~= self then
-							hit = false
-							return 0
-						end
+				local fixtureBody = fixture:getBody()
+				local bodyUserData = fixtureBody:getUserData()
+				local team = bodyUserData:getTeam()
+				if not teamHostility:test(self.team, team) then
+					if body ~= fixtureBody then
+						hit = false
+						return 0
 					end
 				end
 				return -1
