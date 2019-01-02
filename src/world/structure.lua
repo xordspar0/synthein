@@ -54,8 +54,18 @@ function Structure:__create(worldInfo, location, data, appendix)
 		--self.type = "generic"
 	end
 
+<<<<<<< HEAD
 	self.body:setUserData(self)
 	self.shield = Shield(self.body)
+=======
+	local bodyUserData = {}
+
+	bodyUserData.events = {}
+	local team = self:getTeam()
+	bodyUserData.getTeam = function() return team end
+
+	self.body:setUserData(bodyUserData)
+>>>>>>> Save partial work
 
 	local function callback(part, structure, x , y)
 		structure:addPart(part, x, y, part.location[3])
