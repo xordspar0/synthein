@@ -41,10 +41,22 @@ function StructureMath.subtractVectors(vectorA, vectorB)
 	vector[3] = rotation
 	return vector
 end
---[[
-function StructureMath.precalcAnnex(structureVector, annexeeVector)
-	local baseVector
-	--return
+
+function StructureMath.annexBaseVector(structureLocation, structurePartSide, annexeelocation, annexeePartSide)
+	local structureSide = StructureMath.toDirection(structurePartSide + structureLocation[3])
+
+	local structureVector = {}
+	structureVector[1] = structureLocation[1]
+	structureVector[2] = structureLocation[2]
+	structureVector[3] = structureSide
+
+	local annexeeBaseVector = {}
+	annexeeBaseVector[1] = annexeelocation[1]
+	annexeeBaseVector[2] = annexeelocation[2]
+	annexeeBaseVector[3] = StructureMath.toDirection(annexeePartSide + annexeelocation[3])
+
+	structureVector = StructureMath.addUnitVector(structureVector, structureSide)
+	return StructureMath.subtractVectors(structureVector, annexeeBaseVector)
 end
---]]
+
 return StructureMath

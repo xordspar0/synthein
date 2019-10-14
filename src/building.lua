@@ -1,11 +1,15 @@
 local Util = require("util")
 
+local Annex = require("world/annex")
+
 local Building = {}
 Building.__index = Building
 
 function Building.create(world, camera)
 	local self = {}
 	setmetatable(self, Building)
+
+	self.annex = Annex()
 
 	self.pointerImage = love.graphics.newImage("res/images/pointer.png")
 	self.pointerWidth = self.pointerImage:getWidth()
@@ -54,9 +58,14 @@ function Building:setSide(partSide)
 			if self.annexee and self.annexeePart and self.annexeePartSide
 				and self.structure and self.structurePart
 				and self.structurePartSide then
-				self.structure:annex(self.annexee, self.annexeePart,
-							self.annexeePartSide,
-							self.structurePart, self.structurePartSide)
+				self.structure.annexBundle = {}
+				self.structure.annexBundle.inputs = {
+					self.annexeePart,
+					self.annexeePartSide,
+					self.structurePart,
+					self.structurePartSide
+				}
+				self.annexee.annexBundle = self.structure.annexBundle
 			end
 		end
 		return true

@@ -153,7 +153,7 @@ function Structure:removePart(part)
 
 	local parts = self.gridTable:loop()
 	if #parts <= 0 then
-		self.isDestroyed = true
+		self:destroy()
 	end
 end
 
@@ -170,38 +170,16 @@ end
 -- orientation is the side of annexee to attach
 -- structurePart is the block to connect the structure to
 -- side is the side of structurePart to add the annexee to
-function Structure:annex(annexee, annexeePart, annexeePartSide,
+function Structure:annex(parts, annexeePart, annexeePartSide,
 				structurePart, structurePartSide)
-	local structureOffsetX = structurePart.location[1]
-	local structureOffsetY = structurePart.location[2]
+	local baseVector = StructureMath.annexBaseVector(
+		structurePart.location, structurePartSide,
+		annexeePart.location, annexeePartSide)
 
-	local annexeeX = annexeePart.location[1]
-	local annexeeY = annexeePart.location[2]
-
-	local annexeeSide = StructureMath.toDirection(annexeePartSide + annexeePart.location[3])
-	local structureSide = StructureMath.toDirection(structurePartSide + structurePart.location[3])
-
-	local annexeeBaseVector = {annexeeX, annexeeY, annexeeSide}
-	local structureVector = {structureOffsetX, structureOffsetY, structureSide}
-
-	structureVector = StructureMath.addUnitVector(structureVector, structureSide)
-	local baseVector = StructureMath.subtractVectors(structureVector, annexeeBaseVector)
-
-	local parts = annexee.gridTable:loop()
-	for i=1,#parts do
-		self:annexPart(annexee, parts[i], baseVector)
-	end
-end
-
-function Structure:annexPart(annexee, part, baseVector)
-	local annexeeVector = {part.location[1], part.location[2], part.location[3]}
-	local netVector = StructureMath.sumVectors(baseVector, annexeeVector)
-
-	local x, y = unpack(netVector)
-	if self.gridTable:index(x, y) then
-		annexee:disconnectPart(part)
-	else
-		annexee:removePart(part)
+	for _, part in ipairs(parts) do
+--		local annexeeVector = {part.location[1], part.location[2], part.location[3]}
+--		local netVector = StructureMath.sumVectors(baseVector, annexeeVector)
+		local netVector = StructureMath.sumVectors(baseVector, part.location)
 		self:addPart(part, netVector[1], netVector[2], netVector[3])
 	end
 end
@@ -429,8 +407,43 @@ end
 -- Handle commands
 -- Update each part
 function Structure:update(dt)
+print(self.isDestroyed)
 	local partsInfo = self:command(dt)
 	self.shield:update(dt)
+
+	if self.annexBundle then
+		if self.corePart then
+			if self.annexBundle.parts then
+				self:annex(self.annexBundle.parts, unpack(self.annexBundle.inputs))
+				self.annexBundle = nil
+			end
+			self.annexBundle.goalA = {self.body:getPosition()}
+			if self.annexBundle.goalS then
+				local a = self.annexBundle.goalA
+				local s = self.annexBundle.goalS
+				local dx = s[1] - a[1]
+				local dy = s[2] - a[2]
+				self.body:applyForce(dx, dy)
+			end
+		else
+			self.annexBundle.goalS = {self.body:getPosition()}
+			if self.annexBundle.goalA then
+				local a = self.annexBundle.goalA
+				local s = self.annexBundle.goalS
+				local dx = a[1] - s[1]
+				local dy = a[2] - s[2]
+				self.body:applyForce(dx, dy)
+
+				if false then
+					self.annexBundle.parts = self.gridTable:loop()
+					for _, part in ipairs(self.annexBundle.parts) do
+						self:removePart(part)
+					end
+					self.annexBundle = nil
+				end
+			end
+		end
+	end
 end
 
 return Structure
