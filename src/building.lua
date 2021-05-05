@@ -23,9 +23,10 @@ function Building.create(world, camera)
 	return self
 end
 
-function Building:setAnnexee(structure, part)
+function Building:setAnnexee(structure, part, body)
 	self.annexee = structure
 	self.annexeePart = part
+	self.body = body
 	self.mode = 2
 end
 
@@ -63,36 +64,23 @@ function Building:setSide(partSide)
 	end
 end
 
-function Building.getStrengthTable(part, partSide)
-	local connectableSides = part.connectableSides
-	local strength = {}
-	for i = 1, 4 do
-		if connectableSides[i] then
-			if i == partSide then
-				table.insert(strength, 2)
-			else
-				table.insert(strength, 1)
-			end
-		else
-			table.insert(strength, 0)
-		end
-	end
-	local strengthX = strength[2]
-	strength[2] = strength[4]
-	strength[4] = strengthX
-	return strength
-end
+local offsetTable = {{0, .5}, {-.5, 0}, {0, -.5}, {.5, 0}}
 
-function Building:draw()
+function Building:draw(body)
 	if self.annexeePart and self.annexeePartSide then
-		local x, y, partAngle = self.annexeePart:getWorldLocation():getXYA()
-		local angle = self.annexeePartSide * math.pi/2 + partAngle
-		local offsetX, offsetY = Util.vectorComponents(.5, angle)
-		self.camera:draw(self.pointerImage,
-						 x + offsetX,
-						 y + offsetY,
-						 angle,
-						 1/20, 1/20, self.pointerWidth/2, self.pointerWidth/2)
+		local l = self.annexeePart.location
+
+		local side = (self.annexeePartSide + l[3] - 2) % 4 + 1
+		local offsetX, offsetY = unpack(offsetTable[side])
+
+		local x, y = body:getWorldPoint(l[1] + offsetX, l[2] + offsetY)
+		local angle = body:getAngle()
+
+		self.camera:draw(
+			self.pointerImage,
+			x, y, angle,
+			1/20, 1/20,
+			self.pointerWidth/2, self.pointerWidth/2)
 	end
 end
 

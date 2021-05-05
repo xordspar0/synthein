@@ -54,18 +54,14 @@ function Structure:__create(worldInfo, location, data, appendix)
 		--self.type = "generic"
 	end
 
-<<<<<<< HEAD
-	self.body:setUserData(self)
-	self.shield = Shield(self.body)
-=======
 	local bodyUserData = {}
 
-	bodyUserData.events = {}
 	local team = self:getTeam()
 	bodyUserData.getTeam = function() return team end
+	bodyUserData.type = "structure"
 
 	self.body:setUserData(bodyUserData)
->>>>>>> Save partial work
+	self.shield = Shield(self.body)
 
 	local function callback(part, structure, x , y)
 		structure:addPart(part, x, y, part.location[3])
@@ -78,10 +74,6 @@ function Structure:postCreate(references)
 	if self.corePart and self.corePart.postCreate then
 		self.corePart:postCreate(references)
 	end
-end
-
-function Structure:type()
-	return "structure"
 end
 
 -------------------------
@@ -439,6 +431,29 @@ end
 -- Handle commands
 -- Update each part
 function Structure:update(dt)
+	local userData = self.body:getUserData()
+	local buildRequest = userData.buildRequest
+	if buildRequest then
+		local team = userData.getTeam()
+		if buildRequest.type == 1 then
+			if team == buildRequest.team or team == 0 then
+				userData.buildRequest = nil
+				if buildRequest.disconnect then
+					self:disconnectPart(buildRequest.aPart, false)
+				else
+					self:annex(
+						buildRequest.b, buildRequest.bPart, buildRequest.bSide,
+						buildRequest.aPart, buildRequest.aSide)
+				end
+			end
+		elseif buildRequest.type == 2 then
+			if team == 0 then
+				userData.buildRequest = nil
+				buildRequest.b = self
+			end
+		end
+	end
+
 	local partsInfo = self:command(dt)
 	self.shield:update(dt)
 end

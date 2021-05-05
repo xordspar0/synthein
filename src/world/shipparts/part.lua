@@ -21,6 +21,7 @@ function Part:__create()
 	local modules = self.modules
 
 	self.userData = {}
+	self.userData.connectableSides = self.connectableSides
 	function self.userData:draw(fixture, scaleByHealth)
 		if scaleByHealth then
 			c = modules.health:getScaledHealth()

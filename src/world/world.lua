@@ -138,7 +138,7 @@ function World:getObject(locationX, locationY)
 	local callback = function(fixture)
 		if not fixture:isSensor() then
 			local body = fixture:getBody()
-			local object = {body:getUserData()}
+			local object = {body:getUserData(), body, fixture}
 			table.insert(objects, object)
 		end
 		return true
@@ -170,7 +170,7 @@ function World:update(dt)
 		if object.isDestroyed == false then
 			local objectX, objectY = object:getLocation():getXY()
 
-			if object:type() == "structure" and object.corePart and
+			if object.type == "structure" and object.corePart and
 					object.corePart:getTeam() > 0 then
 				if objectX < nextBorders[1] then
 					nextBorders[1] = objectX
